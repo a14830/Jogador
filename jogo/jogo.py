@@ -1,10 +1,9 @@
 import random
 
-# 1. Apresentação do título e inicialização do jogador (Dicionário)
-print("=========================================")
-print("      SIMULADOR DE BATALHA RPG           ")
-print("=========================================")
+# Apresentar o título do jogo
+print("=== SIMULADOR DE BATALHA ===")
 
+# Inicializar o jogador (Dicionário)
 jogador = {
     "vida": 300,
     "ataque": 20,
@@ -12,7 +11,7 @@ jogador = {
     "pontos": 0
 }
 
-# 2. Tipos de inimigos disponíveis (Lista de dicionários)
+# Tipos de inimigo (Lista de dicionários)
 tipos_inimigos = [
     {"nome": "Goblin", "vida": 40, "ataque": 8, "pontos": 100},
     {"nome": "Orc", "vida": 55, "ataque": 11, "pontos": 200},
@@ -21,18 +20,140 @@ tipos_inimigos = [
     {"nome": "Dragão", "vida": 100, "ataque": 20, "pontos": 500}
 ]
 
-# 3. Seleção aleatória de 3 a 5 inimigos (cópia para não alterar o modelo base)
-quantidade_inimigos = random.randint(3, 5)
-inimigos_batalha = []
+# Selecionar aleatoriamente entre 3 e 5 inimigos
+qtd_inimigos = random.randint(3, 5)
+inimigos = []
 
-for _ in range(quantidade_inimigos):
-    modelo = random.choice(tipos_inimigos)
-    inimigos_batalha.append(modelo.copy())
+for i in range(qtd_inimigos):
+    escolhido = random.choice(tipos_inimigos)
+    # Criar um novo dicionário para não alterar o modelo original
+    novo_inimigo = {
+        "nome": escolhido["nome"],
+        "vida": escolhido["vida"],
+        "ataque": escolhido["ataque"],
+        "pontos": escolhido["pontos"]
+    }
+    inimigos.append(novo_inimigo)
 
-total_inimigos = len(inimigos_batalha)
 fugiu = False
 
-print(f"\nSurgiram {total_inimigos} inimigos para a batalha!")
+# Ciclo principal do jogo
+while jogador["vida"] > 0:
+    # Guardar os inimigos que ainda estão vivos numa lista
+    inimigos_vivos = []
+    for inimigo in inimigos:
+        if inimigo["vida"] > 0:
+            inimigos_vivos.append(inimigo)
+
+    # Se não houver inimigos vivos, o jogo termina (vitória)
+    if len(inimigos_vivos) == 0:
+        break
+
+    # Menu Principal
+    print("\n========== BATALHA ==========")
+    print("1 — Atacar inimigo")
+    print("2 — Consultar estado do jogador")
+    print("3 — Listar inimigos vivos")
+    print("4 — Usar poção de cura")
+    print("5 — Fugir / terminar jogo")
+
+    opcao = input("Escolha uma opção: ")
+
+    # Opção 1 — Atacar inimigo
+    if opcao == "1":
+        print("\nInimigos vivos:")
+        for i in range(len(inimigos_vivos)):
+            inimigo = inimigos_vivos[i]
+            print(f"{i + 1} - {inimigo['nome']} | Vida: {inimigo['vida']} | Ataque: {inimigo['ataque']}")
+
+        escolha = input("Escolha o número do inimigo: ")
+
+        # Validar se é um número e se está dentro do intervalo
+        if escolha.isdigit():
+            indice = int(escolha) - 1
+            if indice >= 0 and indice < len(inimigos_vivos):
+                alvo = inimigos_vivos[indice]
+
+                # Dano do jogador (aleatório entre 10 e 20)
+                dano_jogador = random.randint(10, 20)
+                alvo["vida"] -= dano_jogador
+
+                # A vida do inimigo não pode ficar abaixo de zero
+                if alvo["vida"] < 0:
+                    alvo["vida"] = 0
+
+                print(f"Atacaste o {alvo['nome']} e causaste {dano_jogador} de dano!")
+
+                # Verificar se foi derrotado ou se contra-ataca
+                if alvo["vida"] == 0:
+                    jogador["pontos"] += alvo["pontos"]
+                    print(f"Derrotaste o {alvo['nome']}! Ganhaste {alvo['pontos']} pontos.")
+                else:
+                    dano_inimigo = random.randint(5, alvo["ataque"])
+                    jogador["vida"] -= dano_inimigo
+
+                    # A vida do jogador não pode ficar abaixo de zero
+                    if jogador["vida"] < 0:
+                        jogador["vida"] = 0
+
+                    print(f"O {alvo['nome']} contra-atacou e causou {dano_inimigo} de dano!")
+            else:
+                print("Número inválido! Escolha um inimigo da lista.")
+        else:
+            print("Entrada inválida! Digite apenas o número do inimigo.")
+
+    # Opção 2 — Consultar estado do jogador
+    elif opcao == "2":
+        derrotados = len(inimigos) - len(inimigos_vivos)
+        print("\n--- Estado do Jogador ---")
+        print(f"Vida atual: {jogador['vida']}")
+        print(f"Pontuação: {jogador['pontos']}")
+        print(f"Inimigos derrotados: {derrotados}")
+        print(f"Inimigos ainda vivos: {len(inimigos_vivos)}")
+        print(f"Poções disponíveis: {jogador['pocoes']}")
+
+    # Opção 3 — Listar inimigos vivos
+    elif opcao == "3":
+        print("\n--- Inimigos Vivos ---")
+        if len(inimigos_vivos) == 0:
+            print("Não existem inimigos vivos.")
+        else:
+            for inimigo in inimigos_vivos:
+                print(f"{inimigo['nome']} - Vida: {inimigo['vida']} - Ataque: {inimigo['ataque']}")
+
+    # Opção 4 — Usar poção de cura
+    elif opcao == "4":
+        if jogador["pocoes"] == 0:
+            print("Não tens poções disponíveis!")
+        elif jogador["vida"] >= 100:
+            print("Não podes usar poção porque já tens 100 ou mais pontos de vida!")
+        else:
+            jogador["pocoes"] -= 1
+            jogador["vida"] += 25
+            if jogador["vida"] > 100:
+                jogador["vida"] = 100
+            print(f"Usaste uma poção! Vida atual: {jogador['vida']}")
+
+    # Opção 5 — Fugir / terminar jogo
+    elif opcao == "5":
+        fugiu = True
+        break
+
+    # Opção inválida
+    else:
+        print("Opção inválida! Tente novamente.")
+
+# Fim do jogo
+print("\n=============================")
+if fugiu == True:
+    print("FUGA! Terminaste a partida por fuga.")
+elif jogador["vida"] == 0:
+    print("DERROTA! Ficaste sem pontos de vida.")
+else:
+    print("VITÓRIA! Derrotaste todos os inimigos!")
+
+print(f"Pontuação final: {jogador['pontos']}")
+
 
 # 4. Ciclo principal do jogo
 while jogador["vida"] > 0:
